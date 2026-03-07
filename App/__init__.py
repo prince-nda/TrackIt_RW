@@ -11,9 +11,18 @@ def create_app():
     app.config.from_object(Config)
 
     db.init_app(app)
+    bcrypt.init_app(app)
     jwt.init_app(app)
 
+<<<<<<< HEAD
     app.register_blueprint(categories_bp)
     app.register_blueprint(reports_bp)
 
     return app
+=======
+    # Register blueprints
+    from .auth.routes import auth_bp
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    
+    return app
+>>>>>>> 8928e865ace3313719d7982dbed73a6ec8dca9b
