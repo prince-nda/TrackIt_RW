@@ -6,6 +6,7 @@ from .extensions import db, bcrypt, jwt
 
 from App.routes import categories_bp, reports_bp
 
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -14,15 +15,12 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
 
-<<<<<<< HEAD
     app.register_blueprint(categories_bp)
     app.register_blueprint(reports_bp)
 
-    return app
-=======
     # Register blueprints
     from .auth.routes import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     
     return app
->>>>>>> 8928e865ace3313719d7982dbed73a6ec8dca9b
+
