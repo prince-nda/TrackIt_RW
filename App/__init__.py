@@ -10,6 +10,11 @@ def create_app():
     app.config.from_object(Config)
 
     db.init_app(app)
+    bcrypt.init_app(app)
     jwt.init_app(app)
 
+    # Register blueprints
+    from .auth.routes import auth_bp
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    
     return app
