@@ -1,8 +1,14 @@
 from flask import Blueprint, jsonify, request
-from App.models import Category
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from App.models import Category, User
 from App.extensions import db
 
 categories_bp = Blueprint('categories', __name__, url_prefix='/api/categories')
+
+# Helper function to check if user is admin
+def is_admin(user_id):
+    user = User.query.get(user_id)
+    return user and user.role == 'Admin'
 
 @categories_bp.route('', methods=['GET'])
 def get_categories():
@@ -18,7 +24,6 @@ def get_categories():
 
 @categories_bp.route('/<int:category_id>', methods=['GET'])
 def get_category(category_id):
-    """Get single category by ID"""
     try:
         category = Category.query.get_or_404(category_id)
         return jsonify({
@@ -30,15 +35,21 @@ def get_category(category_id):
         return jsonify({'error': str(e)}), 500
 
 @categories_bp.route('', methods=['POST'])
+@jwt_required()
 def create_category():
     """Create new category (admin only)"""
+    current_user_id = get_jwt_identity()
+    
+    # Check if user is admin
+    if not is_admin(current_user_id):
+        return jsonify({'error': 'Admin access required'}), 403
+    
     try:
         data = request.get_json()
         
         if not data or 'name' not in data:
             return jsonify({'error': 'Name is required'}), 400
         
-        # Check if category already exists
         existing = Category.query.filter_by(name=data['name']).first()
         if existing:
             return jsonify({'error': 'Category already exists'}), 400
@@ -64,8 +75,14 @@ def create_category():
         return jsonify({'error': str(e)}), 500
 
 @categories_bp.route('/seed', methods=['POST'])
+@jwt_required()
 def seed_categories():
     """Add initial categories (run once)"""
+    current_user_id = get_jwt_identity()
+    
+    if not is_admin(current_user_id):
+        return jsonify({'error': 'Admin access required'}), 403
+    
     try:
         categories_data = [
             {'name': 'Pothole', 'description': 'Road damage or pothole issues'},
@@ -100,14 +117,19 @@ def seed_categories():
         return jsonify({'error': str(e)}), 500
 
 @categories_bp.route('/<int:category_id>', methods=['PUT'])
+@jwt_required()
 def update_category(category_id):
     """Update category (admin only)"""
+    current_user_id = get_jwt_identity()
+    
+    if not is_admin(current_user_id):
+        return jsonify({'error': 'Admin access required'}), 403
+    
     try:
         category = Category.query.get_or_404(category_id)
         data = request.get_json()
         
         if 'name' in data:
-            # Check if new name already exists
             existing = Category.query.filter_by(name=data['name']).first()
             if existing and existing.id != category_id:
                 return jsonify({'error': 'Category name already exists'}), 400
@@ -131,12 +153,17 @@ def update_category(category_id):
         return jsonify({'error': str(e)}), 500
 
 @categories_bp.route('/<int:category_id>', methods=['DELETE'])
+@jwt_required()
 def delete_category(category_id):
     """Delete category (admin only)"""
+    current_user_id = get_jwt_identity()
+    
+    if not is_admin(current_user_id):
+        return jsonify({'error': 'Admin access required'}), 403
+    
     try:
         category = Category.query.get_or_404(category_id)
         
-        # Check if category has reports
         if category.reports and len(category.reports) > 0:
             return jsonify({'error': 'Cannot delete category with existing reports'}), 400
         
