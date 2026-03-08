@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackIt - Citizen Reporting</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>TrackIt</h1>
+        <nav>
+            <button id="loginBtn">Login</button>
+            <button id="registerBtn">Register</button>
+            <button id="logoutBtn" style="display:none;">Logout</button>
+        </nav>
+    </header>
+
+    <main>
+        <section id="authSection">
+            <div id="loginForm" class="form-container">
+                <h2>Login</h2>
+                <form id="loginFormEl">
+                    <input type="email" id="loginEmail" placeholder="Email" required>
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                    <button type="submit">Login</button>
+                </form>
+            </div>
+            <div id="registerForm" class="form-container" style="display:none;">
+                <h2>Register</h2>
+                <form id="registerFormEl">
+                    <input type="text" id="regUsername" placeholder="Username" required>
+                    <input type="email" id="regEmail" placeholder="Email" required>
+                    <input type="password" id="regPassword" placeholder="Password" required>
+                    <input type="tel" id="regPhone" placeholder="Phone Number" required>
+                    <button type="submit">Register</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="dashboard" style="display:none;">
+            <h2>Dashboard</h2>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Categories</h3>
+                    <ul id="categoriesList"></ul>
+                </div>
+                <div class="card">
+                    <h3>Recent Reports</h3>
+                    <ul id="reportsList"></ul>
+                </div>
+                <div class="card">
+                    <h3>Create Report</h3>
+                    <form id="createReportForm">
+                        <input type="text" id="reportTitle" placeholder="Title" required>
+                        <textarea id="reportDescription" placeholder="Description" required></textarea>
+                        <select id="reportCategory" required>
+                            <option value="">Select Category</option>
+                        </select>
+                        <input type="text" id="reportLocation" placeholder="Location (address)" required>
+                        <input type="number" step="any" id="reportLat" placeholder="Latitude">
+                        <input type="number" step="any" id="reportLng" placeholder="Longitude">
+                        <label><input type="checkbox" id="anonymous"> Anonymous</label>
+                        <button type="submit">Submit Report</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

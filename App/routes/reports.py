@@ -111,3 +111,38 @@ def get_report(report_id):
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@reports_bp.route('', methods=['POST'])
+def create_report():
+    """Create a new report"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['title', 'description', 'category_id', 'location_id', 'user_id']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'success': False, 'error': f'{field} is required'}), 400
+        
+        # Create report
+        report = Report(
+            title=data['title'],
+            description=data['description'],
+            category_id=data['category_id'],
+            location_id=data['location_id'],
+            user_id=data['user_id'],
+            is_anonymous=data.get('is_anonymous', False)
+        )
+        
+        db.session.add(report)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Report created successfully',
+            'report_id': report.id
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
