@@ -17,4 +17,7 @@ def create_app():
     from .auth.routes import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     
+    from App.commands import create_authority_command
+    app.cli.add_command(create_authority_command)
+
     return app
