@@ -52,10 +52,10 @@ def login():
     if not bcrypt.check_password_hash(user.password, password):
         return jsonify({"message": "Invalid credentials"}), 401
 
-    access_token = create_access_token(identity={
-        "id": user.id,
-        "role": user.role
-    })
+    access_token = create_access_token(
+        identity=str(user.id),           
+        additional_claims={"role": user.role}  
+    )
 
     return jsonify({
         "access_token": access_token,
@@ -73,8 +73,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 @jwt_required()
 @role_required("Admin")
 def admin_check():
-    identity = get_jwt_identity()
-    user = User.query.get(identity["id"])
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
     return jsonify({
         "message": "Admin access validated",
         "user": {"id": user.id, "username": user.username, "role": user.role}
@@ -103,8 +103,8 @@ def admin_check():
 @auth_bp.route("/profile", methods=["GET"])
 @jwt_required()
 def profile():
-    identity = get_jwt_identity()
-    user = User.query.get(identity["id"])
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
 
     return {
         "id": user.id,
