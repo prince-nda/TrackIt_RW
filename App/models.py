@@ -31,6 +31,7 @@ class Report(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
+    photo_url = db.Column(db.String(500), nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
     location_id = db.Column(db.Integer, db.ForeignKey('location.id'), nullable=False)
     assigned_admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
