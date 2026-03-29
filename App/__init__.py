@@ -15,8 +15,8 @@ from App.routes import categories_bp, reports_bp, notifications_bp
 def create_app():
     # Serve the simple frontend directly from Flask in dev.
     # This avoids CORS issues when opening index.html via file:// or different ports.
-    frontend_dir = os.path.abspath(os.path.join(os.path.dirname(_file_), '..', 'frontend'))
-    app = Flask(_name_, static_folder=None)
+    frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
+    app = Flask(__name__, static_folder=None)
     app.config.from_object(Config)
 
     # Dev-friendly CORS for API routes (Authorization header for JWT).
