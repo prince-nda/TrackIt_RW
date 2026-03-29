@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackIt RW – Report. Track. Resolve.</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/4.0.0/uicons-bold-straight/css/uicons-bold-straight.css'>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+:root {
+    --sky:#1A6FD4; --sky-light:#E8F2FF; --sky-mid:#2E82F0; --sky-dark:#1254A8;
+    --leaf:#1B8A4A; --leaf-light:#E6F5EC; --leaf-mid:#22A85A;
+    --clay:#C0390B; --paper:#FAF8F5; --parchment:#F2EDE6; --sand:#E8DFD3;
+    --stone:#BEB0A0; --bark:#6B5B4E; --ink:#1A120B; --white:#FFFFFF;
+    --amber:#D97706; --amber-bg:#FEF3C7; --emerald:#059669; --emerald-bg:#D1FAE5;
+    --ruby:#DC2626; --ruby-bg:#FEE2E2; --blue-bg:#DBEAFE;
+    --font-serif:'Fraunces',Georgia,serif; --font-sans:'Plus Jakarta Sans',sans-serif;
+    --r-sm:8px; --r-md:14px; --r-lg:20px; --r-xl:28px; --r-pill:999px;
+    --sh-xs:0 1px 3px rgba(26,18,11,.08); --sh-sm:0 2px 8px rgba(26,18,11,.10);
+    --sh-md:0 6px 24px rgba(26,18,11,.12); --sh-lg:0 16px 48px rgba(26,18,11,.14);
+    --ease:.22s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(var(--sand) 1px,transparent 1px),linear-gradient(90deg,var(--sand) 1px,transparent 1px);background-size:48px 48px;opacity:.35;}
+header{position:sticky;top:0;z-index:100;height:66px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;background:rgba(250,248,245,.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--sand);box-shadow:var(--sh-xs);}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo-icon{width:36px;height:36px;background:var(--sky);border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(26,111,212,.3);flex-shrink:0;position:relative;overflow:hidden;}
+.logo-icon::before{content:'';display:block;width:12px;height:12px;background:white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);}
+.logo-text{font-family:var(--font-serif);font-size:1.35rem;font-weight:700;color:var(--ink);letter-spacing:-.02em;line-height:1;}
+.logo-text span{color:var(--sky);}
+.logo-badge{font-family:var(--font-sans);font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--leaf-light);color:var(--leaf);border:1px solid rgba(27,138,74,.2);border-radius:4px;padding:1px 6px;}
+nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+button,.btn-primary,.btn-secondary{font-family:var(--font-sans);font-size:.84rem;font-weight:600;cursor:pointer;border:none;border-radius:var(--r-pill);padding:8px 18px;transition:all var(--ease);letter-spacing:.01em;display:inline-flex;align-items:center;gap:6px;}
+nav>button{background:transparent;color:var(--bark);font-size:.8rem;}
+nav>button:hover{background:var(--parchment);color:var(--ink);}
+#loginBtn,#registerBtn{background:var(--sky);color:var(--white);box-shadow:0 2px 8px rgba(26,111,212,.25);}
+#loginBtn:hover,#registerBtn:hover{background:var(--sky-mid);transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,111,212,.35);}
+.btn-primary,button[type="submit"]{background:var(--sky);color:var(--white);padding:11px 28px;font-size:.9rem;font-weight:700;border-radius:var(--r-pill);box-shadow:0 3px 12px rgba(26,111,212,.28);}
+.btn-primary:hover,button[type="submit"]:hover{background:var(--sky-mid);transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,111,212,.38);}
+.btn-primary:active,button[type="submit"]:active{transform:translateY(0);}
+.btn-secondary,button[type="reset"]{background:var(--white);color:var(--bark);border:1.5px solid var(--sand);padding:11px 24px;border-radius:var(--r-pill);}
+.btn-secondary:hover,button[type="reset"]:hover{background:var(--parchment);border-color:var(--stone);color:var(--ink);}
+.bell-icon{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:var(--parchment);border:1.5px solid var(--sand);border-radius:var(--r-md);cursor:pointer;color:var(--bark);transition:all var(--ease);}
+.bell-icon:hover{background:var(--sand);color:var(--ink);}
+.badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;background:var(--clay);color:white;font-size:.62rem;font-weight:700;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--paper);}
+main{max-width:1160px;margin:0 auto;padding:52px 28px 100px;position:relative;z-index:1;}
+section{animation:rise .4s ease both;}
+@keyframes rise{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+.page-eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sky);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.page-eyebrow::before{content:'';display:inline-block;width:20px;height:2px;background:var(--sky);border-radius:1px;}
+.page-title{font-family:var(--font-serif);font-size:2.4rem;font-weight:700;color:var(--ink);letter-spacing:-.03em;line-height:1.1;margin-bottom:8px;}
+.page-sub{font-size:.95rem;color:var(--bark);margin-bottom:36px;}
+#authSection{display:grid;grid-template-columns:1fr 1fr;min-height:80vh;border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--sh-lg);border:1px solid var(--sand);max-width:900px;margin:0 auto;}
+.auth-hero{background:linear-gradient(145deg,var(--sky-dark) 0%,var(--sky) 60%,#3B9EFF 100%);padding:52px 44px;display:flex;flex-direction:column;justify-content:space-between;color:white;position:relative;overflow:hidden;}
+.auth-hero::before{content:'';position:absolute;bottom:-60px;right:-60px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.07);}
+.auth-hero::after{content:'';position:absolute;top:-40px;left:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.05);}
+.auth-hero-logo{font-family:var(--font-serif);font-size:1.6rem;font-weight:700;letter-spacing:-.02em;opacity:.95;}
+.auth-hero-logo span{opacity:.7;}
+.auth-hero h2{font-family:var(--font-serif);font-size:2rem;font-weight:600;line-height:1.25;letter-spacing:-.02em;position:relative;z-index:1;}
+.auth-hero p{font-size:.88rem;opacity:.75;margin-top:10px;line-height:1.6;position:relative;z-index:1;}
+.auth-stats{display:flex;gap:24px;position:relative;z-index:1;}
+.auth-stat-item{display:flex;flex-direction:column;gap:2px;}
+.auth-stat-num{font-family:var(--font-serif);font-size:1.5rem;font-weight:700;line-height:1;}
+.auth-stat-label{font-size:.72rem;opacity:.65;letter-spacing:.04em;}
+.form-container{background:var(--white);padding:48px 44px;display:flex;flex-direction:column;justify-content:center;}
+.form-container h2{font-family:var(--font-serif);font-size:1.6rem;font-weight:700;color:var(--ink);letter-spacing:-.02em;margin-bottom:6px;}
+.form-container .form-sub{font-size:.85rem;color:var(--bark);margin-bottom:28px;}
+.form-container form{display:flex;flex-direction:column;gap:0;}
+input[type="text"],input[type="email"],input[type="password"],input[type="tel"],input[type="number"],select,textarea{width:100%;font-family:var(--font-sans);font-size:.9rem;color:var(--ink);background:var(--parchment);border:1.5px solid var(--sand);border-radius:var(--r-md);padding:11px 14px;outline:none;transition:border-color var(--ease),box-shadow var(--ease),background var(--ease);}
+input::placeholder,textarea::placeholder{color:var(--stone);}
+input:focus,select:focus,textarea:focus{border-color:var(--sky);background:var(--white);box-shadow:0 0 0 3px rgba(26,111,212,.12);}
+textarea{resize:vertical;}
+select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236B5B4E'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+label{font-size:.78rem;font-weight:600;color:var(--bark);letter-spacing:.02em;display:block;margin-bottom:6px;}
+small{font-size:.75rem;color:var(--stone);margin-top:4px;display:block;}
+.form-group{margin-bottom:16px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;}
+.card{background:var(--white);border-radius:var(--r-lg);padding:20px;border:1px solid var(--sand);box-shadow:var(--sh-sm);transition:box-shadow var(--ease),transform var(--ease);}
+.card:hover{box-shadow:var(--sh-md);transform:translateY(-3px);}
+.card-icon{width:40px;height:40px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:14px;}
+.card-icon.blue{background:var(--sky-light);color:var(--sky);}
+.card-icon.green{background:var(--leaf-light);color:var(--leaf);}
+.card h3{font-family:var(--font-serif);font-size:1.05rem;font-weight:600;color:var(--ink);margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--parchment);}
+.card ul{list-style:none;}
+.card ul li{display:flex;justify-content:space-between;align-items:center;padding:8px;gap:8px;border-bottom:1px solid var(--parchment);}
+.card ul li:last-child{border-bottom:none;}
+.card ul li::before{display:none;}
+.form-page-container{max-width:760px;margin:0 auto;}
+.report-submission-form{background:var(--white);border-radius:var(--r-xl);padding:48px 52px;border:1px solid var(--sand);box-shadow:var(--sh-md);}
+.form-steps{display:flex;align-items:center;margin-bottom:36px;background:var(--parchment);border-radius:var(--r-pill);padding:6px;}
+.form-step{flex:1;text-align:center;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--stone);padding:7px 8px;border-radius:var(--r-pill);transition:all var(--ease);}
+.form-step.active{background:var(--white);color:var(--sky);box-shadow:var(--sh-xs);}
+.file-input-wrapper{display:flex;align-items:center;gap:14px;background:var(--parchment);border:2px dashed var(--sand);border-radius:var(--r-lg);padding:18px 20px;cursor:pointer;transition:border-color var(--ease),background var(--ease);}
+.file-input-wrapper:hover{border-color:var(--sky);background:var(--sky-light);}
+.file-input-wrapper input[type="file"]{display:none;}
+.file-upload-icon{width:36px;height:36px;background:var(--white);border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:var(--sh-xs);flex-shrink:0;}
+#photoFileName{font-size:.84rem;color:var(--bark);}
+.photo-preview{margin-top:14px;border-radius:var(--r-md);overflow:hidden;max-width:240px;border:2px solid var(--sand);}
+.photo-preview img{width:100%;display:block;}
+.checkbox-group label{display:flex;align-items:flex-start;gap:10px;font-size:.875rem;color:var(--bark);font-weight:500;letter-spacing:0;cursor:pointer;}
+.checkbox-group input[type="checkbox"]{width:16px;height:16px;accent-color:var(--sky);margin-top:2px;flex-shrink:0;}
+.form-actions{display:flex;gap:12px;margin-top:32px;}
+.message-container{margin-top:18px;padding:14px 18px;border-radius:var(--r-md);font-size:.875rem;font-weight:500;}
+.tracking-page-container{max-width:940px;margin:0 auto;}
+.tracking-filters{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;background:var(--white);border-radius:var(--r-lg);padding:20px 24px;margin-bottom:24px;border:1px solid var(--sand);box-shadow:var(--sh-xs);}
+.filter-group{display:flex;flex-direction:column;gap:6px;}
+/* ADDED: loadUserReports() targets #trackingReportsList inside this */
+.reports-list{display:flex;flex-direction:column;gap:14px;}
+.empty-state{text-align:center;padding:72px 24px;background:var(--white);border-radius:var(--r-xl);border:2px dashed var(--sand);}
+.empty-state-icon{font-size:2.5rem;margin-bottom:12px;}
+.empty-state p{color:var(--bark);font-size:.9rem;}
+.report-card{background:var(--white);border-radius:var(--r-lg);padding:22px 26px;border:1px solid var(--sand);box-shadow:var(--sh-xs);transition:all var(--ease);position:relative;overflow:hidden;}
+.report-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--sand);transition:background var(--ease);}
+.report-card:hover{box-shadow:var(--sh-md);border-color:var(--sky);transform:translateX(4px);}
+.report-card:hover::before{background:var(--sky);}
+/* ADDED: card inner layout (was injected via JS before) */
+.report-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;}
+.report-card-title h3{font-family:var(--font-serif);font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:3px;letter-spacing:-.01em;}
+.report-card-title small{font-size:.77rem;color:var(--bark);}
+.report-card-body{font-size:.875rem;color:var(--bark);margin-bottom:12px;line-height:1.55;}
+.report-card-body p{margin-bottom:4px;}
+.report-card-footer{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid var(--parchment);}
+.report-card-footer small{font-size:.77rem;color:var(--stone);}
+/* ADDED: view details button */
+.view-details-btn{background:var(--sky);color:#fff;border:none;border-radius:var(--r-pill);padding:7px 16px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:var(--font-sans);transition:background var(--ease);white-space:nowrap;}
+.view-details-btn:hover{background:var(--sky-mid);}
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:var(--r-pill);font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;}
+.status-badge::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.status-pending,.status-Pending{background:var(--amber-bg);color:var(--amber);}
+.status-pending::before,.status-Pending::before{background:var(--amber);}
+.status-in-progress,.status-In-Progress{background:var(--blue-bg);color:var(--sky);}
+.status-in-progress::before,.status-In-Progress::before{background:var(--sky);}
+.status-resolved,.status-Resolved{background:var(--emerald-bg);color:var(--emerald);}
+.status-resolved::before,.status-Resolved::before{background:var(--emerald);}
+.status-rejected,.status-Rejected{background:var(--ruby-bg);color:var(--ruby);}
+.status-rejected::before,.status-Rejected::before{background:var(--ruby);}
+.status-timeline{padding:4px 0;}
+.timeline-item{display:flex;gap:14px;align-items:flex-start;padding:12px 0 12px 20px;border-left:2px solid var(--sand);margin-left:10px;position:relative;}
+.timeline-item::before{content:'';position:absolute;left:-7px;top:18px;width:12px;height:12px;border-radius:50%;background:var(--sky);border:2px solid var(--paper);box-shadow:0 0 0 2px var(--sky);}
+.modal{position:fixed;inset:0;background:rgba(26,18,11,.55);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .18s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-content{background:var(--white);border-radius:var(--r-xl);width:100%;max-width:640px;max-height:88vh;overflow-y:auto;box-shadow:var(--sh-lg);border:1px solid var(--sand);animation:popUp .26s cubic-bezier(.34,1.5,.64,1);}
+@keyframes popUp{from{transform:scale(.93) translateY(20px)}to{transform:scale(1) translateY(0)}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:24px 30px;border-bottom:1px solid var(--parchment);}
+.modal-header h3{font-family:var(--font-serif);font-size:1.25rem;font-weight:700;color:var(--ink);letter-spacing:-.02em;}
+.close-btn{width:34px;height:34px;background:var(--parchment);border:1px solid var(--sand);border-radius:var(--r-md);font-size:1.1rem;cursor:pointer;color:var(--bark);display:flex;align-items:center;justify-content:center;transition:all var(--ease);padding:0;}
+.close-btn:hover{background:var(--sand);color:var(--ink);}
+.modal-body{padding:24px 30px;}
+.modal-footer{padding:16px 30px 24px;display:flex;justify-content:flex-end;border-top:1px solid var(--parchment);}
+.report-detail-section{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--parchment);}
+.report-detail-section:last-child{border-bottom:none;margin-bottom:0;}
+.report-detail-section h4{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--sky);margin-bottom:12px;}
+.report-detail-section p{font-size:.875rem;color:var(--bark);margin-bottom:6px;}
+.description-text{background:var(--parchment);border-radius:var(--r-md);padding:14px 16px;line-height:1.7;font-size:.875rem;color:var(--bark);border-left:3px solid var(--sky);}
+.comments-section .placeholder{color:var(--stone);font-style:italic;font-size:.875rem;}
+/* ADDED: Cloudinary photo in modal */
+.modal-photo{width:100%;max-height:220px;object-fit:cover;border-radius:var(--r-md);display:block;border:1px solid var(--sand);}
+#reportsMap{border-radius:var(--r-lg)!important;border:1px solid var(--sand)!important;box-shadow:var(--sh-md)!important;overflow:hidden;}
+.admin-controls{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;background:var(--white);border-radius:var(--r-lg);padding:20px 24px;margin-bottom:20px;border:1px solid var(--sand);box-shadow:var(--sh-xs);}
+.admin-reports-table{width:100%;border-collapse:collapse;background:var(--white);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm);border:1px solid var(--sand);}
+.admin-reports-table thead{background:var(--ink);}
+.admin-reports-table th{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:14px 18px;text-align:left;color:rgba(255,255,255,.7);}
+.admin-reports-table td{padding:14px 18px;font-size:.875rem;color:var(--bark);border-bottom:1px solid var(--parchment);vertical-align:middle;}
+.admin-reports-table td:first-child{font-weight:700;color:var(--sky);font-size:.82rem;}
+.admin-reports-table tr:last-child td{border-bottom:none;}
+.admin-reports-table tbody tr{transition:background var(--ease);}
+.admin-reports-table tbody tr:hover{background:var(--parchment);}
+.table-scroll-wrapper{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r-lg);border:1px solid var(--sand);box-shadow:var(--sh-sm);}
+.table-scroll-wrapper .admin-reports-table{border:none;border-radius:0;box-shadow:none;min-width:560px;}
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--parchment);}
+::-webkit-scrollbar-thumb{background:var(--stone);border-radius:99px;}
+::-webkit-scrollbar-thumb:hover{background:var(--sky);}
+@media(max-width:1024px){header{padding:0 24px;}main{padding:40px 20px 80px;}.admin-reports-table th:nth-child(3),.admin-reports-table td:nth-child(3){display:none;}}
+@media(max-width:768px){
+  header{padding:0 16px;height:58px;}
+  .logo-badge{display:none;}
+  nav{gap:4px;}
+  nav>button{padding:6px 10px;font-size:.75rem;}
+  main{padding:28px 16px 72px;}
+  #authSection{grid-template-columns:1fr;min-height:auto;border-radius:var(--r-lg);margin-top:8px;}
+  .auth-hero{padding:32px 28px 28px;}
+  .auth-hero h2{font-size:1.5rem;}
+  .form-container{padding:32px 28px;border-radius:0;}
+  .page-title{font-size:2rem;}
+  .dashboard-grid{grid-template-columns:1fr;}
+  .report-submission-form{padding:28px 20px;}
+  .form-steps{gap:2px;padding:4px;}
+  .form-step{font-size:.65rem;padding:6px 4px;}
+  .form-row{grid-template-columns:1fr;}
+  .form-actions{flex-direction:column;}
+  .form-actions button{width:100%;justify-content:center;}
+  .tracking-filters{flex-direction:column;align-items:stretch;gap:12px;padding:16px;}
+  .report-card{padding:18px 20px 18px 24px;}
+  .report-card:hover{transform:none;}
+  .modal{padding:0;align-items:flex-end;}
+  .modal-content{max-width:100%;border-radius:var(--r-xl) var(--r-xl) 0 0;max-height:92vh;}
+  .modal-header{padding:20px 20px 16px;}
+  .modal-body{padding:16px 20px;}
+  .modal-footer{padding:12px 20px 28px;}
+  .admin-controls{flex-direction:column;align-items:stretch;gap:12px;padding:16px;}
+  .admin-reports-table th:nth-child(4),.admin-reports-table td:nth-child(4){display:none;}
+  #reportsMap{height:380px!important;border-radius:var(--r-md)!important;}
+}
+@media(max-width:480px){
+  header{padding:0 12px;height:54px;}
+  .logo-text{font-size:1.1rem;}
+  nav>button{padding:5px 8px;font-size:.7rem;}
+  main{padding:20px 12px 80px;}
+  .page-title{font-size:1.65rem;}
+  .auth-hero{padding:24px 20px 22px;}
+  .form-steps{display:none;}
+  .report-submission-form{padding:20px 16px;}
+  .admin-reports-table th:nth-child(5),.admin-reports-table td:nth-child(5){display:none;}
+  #reportsMap{height:300px!important;}
+  .empty-state{padding:48px 16px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon"></div>
+    <span class="logo-text">Track<span>It</span></span>
+    <span class="logo-badge">Kigali</span>
+  </div>
+  <nav>
+    <button id="loginBtn">Login</button>
+    <button id="registerBtn">Register</button>
+    <button id="logoutBtn" style="display:none;">Logout</button>
+    <button id="submitReportNavBtn" style="display:none;">Submit Report</button>
+    <button id="trackReportNavBtn" style="display:none;">My Reports</button>
+    <button id="dashboardNavBtn" style="display:none;">Dashboard</button>
+    <button id="mapNavBtn" style="display:none;">Map</button>
+    <!-- ADDED: no inline onclick; JS controls visibility based on JWT role claim -->
+    <button id="adminNavBtn" style="display:none;">Admin</button>
+    <div id="notificationBell" class="bell-icon" style="display:none;">
+      <i class="fi fi-bs-bell"></i>
+      <span id="notificationBadge" class="badge" style="display:none;">0</span>
+    </div>
+  </nav>
+</header>
+
+<main>
+
+<!-- Auth -->
+<section id="authSection">
+  <div class="auth-hero">
+    <div class="auth-hero-logo">TrackIt <span>RW</span></div>
+    <div>
+      <h2>Your voice shapes Kigali's future</h2>
+      <p>Report road damage, drainage issues, waste problems and more, and track exactly what happens next.</p>
+    </div>
+  </div>
+  <div id="loginForm" class="form-container">
+    <h2>Welcome back</h2>
+    <p class="form-sub">Sign in to report or track issues in your community</p>
+    <form id="loginFormEl">
+      <div class="form-group"><label for="loginEmail">Email address</label><input type="email" id="loginEmail" placeholder="you@example.com" required></div>
+      <div class="form-group"><label for="loginPassword">Password</label><input type="password" id="loginPassword" placeholder="Enter your password" required></div>
+      <button type="submit" style="width:100%;margin-top:8px;">Sign In</button>
+      <p style="text-align:center;margin-top:14px;font-size:.82rem;color:var(--bark);">
+        <a href="#" onclick="showForgotPassword();return false;" style="color:var(--sky);font-weight:600;text-decoration:none;">Forgot your password?</a>
+      </p>
+    </form>
+  </div>
+  <div id="registerForm" class="form-container" style="display:none;">
+    <h2>Join TrackIt RW</h2>
+    <p class="form-sub">Create an account to start reporting issues in Kigali</p>
+    <form id="registerFormEl">
+      <div class="form-group"><label for="regUsername">Full Name</label><input type="text" id="regUsername" placeholder="Your name" required></div>
+      <div class="form-group"><label for="regEmail">Email address</label><input type="email" id="regEmail" placeholder="you@example.com" required></div>
+      <div class="form-group"><label for="regPassword">Password</label><input type="password" id="regPassword" placeholder="Create a password" required></div>
+      <div class="form-group"><label for="regPhone">Phone Number</label><input type="tel" id="regPhone" placeholder="+250 7XX XXX XXX" required></div>
+      <button type="submit" style="width:100%;margin-top:8px;">Create Account</button>
+    </form>
+  </div>
+</section>
+
+<!-- Dashboard -->
+<section id="dashboard" style="display:none;">
+  <div class="page-eyebrow">Overview</div>
+  <p class="page-title">Dashboard</p>
+  <div class="dashboard-grid">
+    <div class="card"><div class="card-icon blue">🗂️</div><h3>Issue Categories</h3><ul id="categoriesList"></ul></div>
+    <div class="card"><div class="card-icon green">📋</div><h3>Recent Reports</h3><ul id="reportsList"></ul></div>
+  </div>
+  <div class="card" style="margin-top:20px;">
+    <h3>Quick Actions</h3>
+    <table style="width:100%;border-collapse:collapse;margin-top:12px;">
+      <thead><tr>
+        <th style="text-align:left;padding:10px;border-bottom:1px solid var(--sand);">Action</th>
+        <th style="text-align:left;padding:10px;border-bottom:1px solid var(--sand);">Go</th>
+      </tr></thead>
+      <tbody><tr>
+        <td style="padding:10px;">Submit a new issue report</td>
+        <td style="padding:10px;"><button class="btn-primary" onclick="showReportSubmissionPage()">Submit Report</button></td>
+      </tr></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Report Submission -->
+<section id="reportSubmissionPage" style="display:none;">
+  <div class="form-page-container">
+    <div class="page-eyebrow">New Report</div>
+    <p class="page-title">Submit an Issue</p>
+    <p class="page-sub">Help improve infrastructure in Kimironko, Bumbogo and across Kigali</p>
+    <div class="report-submission-form">
+      <form id="reportSubmissionForm">
+        <div class="form-steps">
+          <div class="form-step active">1 · Details</div>
+          <div class="form-step">2 · Location</div>
+          <div class="form-step">3 · Photo</div>
+          <div class="form-step">4 · Submit</div>
+        </div>
+        <div class="form-group"><label for="submissionTitle">Report Title *</label><input type="text" id="submissionTitle" placeholder="e.g. Flooded road near Kimironko market" maxlength="100" required><small>Maximum 100 characters</small></div>
+        <div class="form-group"><label for="submissionCategory">Issue Category *</label><select id="submissionCategory" required><option value="">Select the type of issue</option></select></div>
+        <div class="form-group"><label for="submissionDescription">Describe the Problem *</label><textarea id="submissionDescription" placeholder="What did you see? How severe is it? How long has it been there?" rows="5" maxlength="1000" required></textarea><small><span id="charCount">0</span>/1000 characters</small></div>
+        <div class="form-group"><label for="submissionAddress">Address or Landmark *</label><input type="text" id="submissionAddress" placeholder="e.g. KG 11 Ave, near Kimironko bus stop" required></div>
+        <!-- Interactive Map Picker -->
+        <div class="form-group">
+          <label>📍 Pin Exact Location on Map</label>
+          <p style="font-size:.8rem;color:var(--stone);margin-bottom:10px;line-height:1.5;">Click anywhere on the map to pinpoint the exact location of the issue. The coordinates will be filled in automatically.</p>
+          <div id="submissionMapPicker" style="height:320px;width:100%;border-radius:var(--r-lg);border:2px solid var(--sand);overflow:hidden;box-shadow:var(--sh-sm);transition:border-color var(--ease);"></div>
+          <div id="mapPickerStatus" style="margin-top:10px;padding:10px 14px;background:var(--parchment);border-radius:var(--r-md);font-size:.82rem;color:var(--bark);display:flex;align-items:center;gap:8px;">
+            <span id="mapPickerIcon" style="font-size:1rem;">🗺️</span>
+            <span id="mapPickerText">No location pinned yet — click the map above to set one.</span>
+          </div>
+          <!-- Hidden inputs still carry the values to the form handler -->
+          <input type="hidden" id="submissionLat">
+          <input type="hidden" id="submissionLng">
+          <!-- "Clear pin" helper -->
+          <button type="button" id="clearMapPin" onclick="clearMapPin()" style="display:none;margin-top:8px;background:var(--ruby-bg);color:var(--ruby);border:1.5px solid var(--ruby);border-radius:var(--r-pill);padding:6px 16px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:var(--font-sans);transition:all var(--ease);" onmouseover="this.style.background='var(--ruby)';this.style.color='#fff'" onmouseout="this.style.background='var(--ruby-bg)';this.style.color='var(--ruby)'">✕ Clear Pin</button>
+        </div>
+        <div class="form-group">
+          <label>Attach a Photo (optional)</label>
+          <div class="file-input-wrapper" onclick="document.getElementById('submissionPhoto').click()">
+            <div class="file-upload-icon">📷</div>
+            <!-- ADDED: webp added — Cloudinary's upload_photo accepts it -->
+            <input type="file" id="submissionPhoto" accept="image/jpeg,image/png,image/gif,image/webp">
+            <span id="photoFileName">Tap to upload a photo of the issue</span>
+          </div>
+          <div id="photoPreview" class="photo-preview" style="display:none;"><img id="previewImage" src="" alt="Preview"></div>
+        </div>
+        <div class="form-group"><label for="submissionPriority">How urgent is this?</label>
+          <select id="submissionPriority">
+            <option value="Medium">Medium - needs attention soon</option>
+            <option value="High">High - causes daily problems</option>
+            <option value="Low">Low - not immediately dangerous</option>
+            <option value="Urgent">Urgent - public safety risk</option>
+          </select>
+        </div>
+        <div class="form-group checkbox-group">
+          <label for="submissionAnonymous"><input type="checkbox" id="submissionAnonymous"><span>Submit anonymously (your name stays private)</span></label>
+          <small>You can still track your report — we just won't display your name publicly.</small>
+        </div>
+        <!-- ADDED: id="contactInfoSection" so toggleContactInfo() can find it -->
+        <div id="contactInfoSection" class="form-group">
+          <label for="submissionContactPhone">Phone Number (optional)</label>
+          <input type="tel" id="submissionContactPhone" placeholder="+250 7XX XXX XXX">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Submit Report</button>
+          <button type="reset" class="btn-secondary">Clear Form</button>
+        </div>
+        <div id="submissionMessage" class="message-container" style="display:none;"></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- Report Tracking -->
+<section id="reportTrackingPage" style="display:none;">
+  <div class="tracking-page-container">
+    <div class="page-eyebrow">My Submissions</div>
+    <p class="page-title">My Reports</p>
+    <p class="page-sub">See the live status of every issue you've submitted</p>
+    <div class="tracking-filters">
+      <div class="filter-group">
+        <label for="trackingStatusFilter">Status</label>
+        <select id="trackingStatusFilter">
+          <option value="">All</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="trackingCategoryFilter">Category</label>
+        <select id="trackingCategoryFilter"><option value="">All Categories</option></select>
+      </div>
+      <button id="trackingRefreshBtn" class="btn-secondary">&#8635; Refresh</button>
+    </div>
+    <!-- ADDED: replaces old static empty-state div; loadUserReports() writes cards here -->
+    <div id="trackingReportsList" class="reports-list">
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <p>Loading your reports…</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Map View -->
+<section id="mapViewPage" style="display:none;">
+  <div class="page-eyebrow">Geo View</div>
+  <p class="page-title">Reports Map</p>
+  <p class="page-sub">See all reported issues across Kigali's sectors</p>
+  <div id="reportsMap" style="height:500px;width:100%;border-radius:var(--r-lg);"></div>
+</section>
+
+<!-- Admin Dashboard -->
+<section id="adminDashboardPage" style="display:none;">
+  <div class="page-eyebrow">Administration</div>
+  <p class="page-title">Admin Dashboard</p>
+  <p class="page-sub">Manage and resolve citizen-reported issues across Kigali</p>
+
+  <!-- Admin Tabs -->
+  <div class="admin-tabs" id="adminTabs">
+    <button class="admin-tab active" data-tab="overview" onclick="switchAdminTab('overview')">📊 Overview</button>
+    <button class="admin-tab" data-tab="reports" onclick="switchAdminTab('reports')">📋 All Reports</button>
+    <button class="admin-tab" data-tab="map" onclick="switchAdminTab('map')">🗺 Map View</button>
+  </div>
+
+  <!-- TAB: Overview / Analytics -->
+  <div id="adminTab-overview" class="admin-tab-content">
+    <!-- Stat Cards -->
+    <div id="adminStatsBar" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;"></div>
+
+    <!-- Charts Row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+      <div class="card" style="padding:24px;">
+        <h3 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--sky);font-weight:700;margin-bottom:20px;font-family:var(--font-sans);">Reports by Status</h3>
+        <div style="position:relative;height:220px;"><canvas id="statusChart"></canvas></div>
+      </div>
+      <div class="card" style="padding:24px;">
+        <h3 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--sky);font-weight:700;margin-bottom:20px;font-family:var(--font-sans);">Reports by Category</h3>
+        <div style="position:relative;height:220px;"><canvas id="categoryChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Recent photos strip -->
+    <div class="card" style="padding:24px;margin-bottom:24px;">
+      <h3 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--sky);font-weight:700;margin-bottom:16px;font-family:var(--font-sans);">Recent Photos from Reports</h3>
+      <div id="adminPhotoStrip" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch;">
+        <p style="color:var(--stone);font-style:italic;font-size:.875rem;">Loading…</p>
+      </div>
+    </div>
+
+    <!-- Recent activity table (last 5) -->
+    <div class="card" style="padding:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--sky);font-weight:700;font-family:var(--font-sans);">Latest Reports</h3>
+        <button class="view-details-btn" style="font-size:.75rem;padding:5px 14px;" onclick="switchAdminTab('reports')">See all →</button>
+      </div>
+      <div class="table-scroll-wrapper" style="border:none;box-shadow:none;">
+        <table class="admin-reports-table" style="min-width:500px;">
+          <thead><tr><th>ID</th><th>Title</th><th>Category</th><th>Photo</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="adminRecentTableBody">
+            <tr><td colspan="6" style="text-align:center;color:var(--stone);padding:32px;">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: All Reports -->
+  <div id="adminTab-reports" class="admin-tab-content" style="display:none;">
+    <div class="admin-controls">
+      <div class="filter-group">
+        <label for="adminStatusFilter">Status</label>
+        <select id="adminStatusFilter">
+          <option value="">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="adminCategoryFilter">Category</label>
+        <select id="adminCategoryFilter"><option value="">All Categories</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="adminDistrictFilter">District / Address</label>
+        <input type="text" id="adminDistrictFilter" placeholder="e.g. Gasabo">
+      </div>
+      <div class="filter-group">
+        <label for="adminPhotoFilter">Has Photo</label>
+        <select id="adminPhotoFilter">
+          <option value="">Any</option>
+          <option value="yes">With Photo</option>
+          <option value="no">Without Photo</option>
+        </select>
+      </div>
+      <button id="adminRefreshBtn" class="btn-secondary">&#8635; Refresh</button>
+    </div>
+
+    <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+      <span id="adminReportCount" style="font-size:.82rem;color:var(--bark);font-weight:600;"></span>
+      <div style="display:flex;gap:8px;">
+        <button onclick="setAdminView('table')" id="btnViewTable" class="view-details-btn" style="background:var(--sky);color:#fff;padding:6px 12px;font-size:.75rem;">☰ Table</button>
+        <button onclick="setAdminView('grid')" id="btnViewGrid" class="view-details-btn" style="background:var(--parchment);color:var(--ink);border:1px solid var(--sand);padding:6px 12px;font-size:.75rem;">⊞ Grid</button>
+      </div>
+    </div>
+
+    <!-- Table view -->
+    <div id="adminTableView" class="table-scroll-wrapper">
+      <table class="admin-reports-table">
+        <thead><tr><th>ID</th><th>Title & Date</th><th>Category</th><th>Location</th><th>Reporter</th><th>Photo</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="adminReportsTableBody">
+          <tr><td colspan="8" style="text-align:center;color:var(--stone);padding:48px;font-size:.875rem;">Loading reports…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Grid view (card layout) -->
+    <div id="adminGridView" style="display:none;"></div>
+  </div>
+
+  <!-- TAB: Map -->
+  <div id="adminTab-map" class="admin-tab-content" style="display:none;">
+    <div id="adminReportsMap" style="height:520px;width:100%;border-radius:var(--r-lg);border:1px solid var(--sand);box-shadow:var(--sh-md);"></div>
+    <p style="font-size:.78rem;color:var(--stone);margin-top:10px;text-align:center;">Click any marker to see report details and photo</p>
+  </div>
+</section>
+
+<div id="reportDetailModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Report #<span id="modalReportId"></span></h3>
+      <button class="close-btn" onclick="closeReportModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="report-detail-section">
+        <h4>Status</h4>
+        <span id="modalReportStatus" class="status-badge"></span>
+      </div>
+
+      <div class="report-detail-section">
+        <h4>Details</h4>
+        <p><strong>Title:</strong> <span id="modalReportTitle"></span></p>
+        <p><strong>Category:</strong> <span id="modalReportCategory"></span></p>
+        <p><strong>Submitted:</strong> <span id="modalReportSubmitted"></span></p>
+      </div>
+
+      <div class="report-detail-section">
+        <h4>Description</h4>
+        <div class="description-text" id="modalReportDescription"></div>
+      </div>
+
+      <div class="report-detail-section">
+        <h4>Location</h4>
+        <p id="modalReportLocation"></p>
+        <p id="modalReportCoordinates" style="display:none;">
+          <strong>GPS:</strong> <span id="modalReportGPS"></span>
+        </p>
+      </div>
+
+      
+      <div id="modalPhotoSection" class="report-detail-section" style="display:none;">
+        <h4>Photo</h4>
+        <img id="modalReportPhoto" class="modal-photo" src="" alt="Report photo">
+      </div>
+
+      <div class="report-detail-section">
+        <h4>Timeline</h4>
+        <div class="status-timeline" id="modalStatusHistory"></div>
+      </div>
+
+      <div class="report-detail-section comments-section">
+        <h4>Official Updates</h4>
+        <div id="modalReportComments"><p class="placeholder">No updates yet</p></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeReportModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Admin Update Modal -->
+<div id="adminUpdateModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Update Report Status</h3>
+      <button class="close-btn" onclick="closeAdminModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:20px;font-size:.9rem;color:var(--bark);">
+        Updating: <strong id="adminUpdateReportTitle" style="color:var(--ink);"></strong>
+      </p>
+      <form id="adminUpdateStatusForm">
+        <input type="hidden" id="adminUpdateReportId">
+        <div class="form-group"><label for="adminNewStatus">New Status</label>
+          <select id="adminNewStatus" required>
+            <option value="Pending">Pending</option><option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option><option value="Rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="form-group"><label for="adminStatusNote">Official Note</label>
+          <textarea id="adminStatusNote" rows="4" placeholder="Describe what action is being taken or why the report is rejected…"></textarea>
+        </div>
+        <button type="submit" class="btn-primary">Save Update</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div id="forgotPasswordModal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:480px;">
+    <div class="modal-header">
+      <h3 id="forgotModalTitle">Reset Password</h3>
+      <button class="close-btn" onclick="closeForgotModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Step 1: Enter email -->
+      <div id="forgotStep1">
+        <p style="font-size:.875rem;color:var(--bark);margin-bottom:20px;line-height:1.6;">Enter the email address you used to register. We'll send you a link to reset your password.</p>
+        <div class="form-group">
+          <label for="forgotEmail">Email Address</label>
+          <input type="email" id="forgotEmail" placeholder="you@example.com" required>
+        </div>
+        <button class="btn-primary" style="width:100%;" onclick="handleForgotPassword()">Send Reset Link</button>
+      </div>
+
+      <!-- Step 2: Enter reset token + new password -->
+      <div id="forgotStep2" style="display:none;">
+        <p style="font-size:.875rem;color:var(--bark);margin-bottom:20px;line-height:1.6;">Check your email for the reset token and enter it below along with your new password.</p>
+        <div class="form-group">
+          <label for="resetToken">Reset Token</label>
+          <input type="text" id="resetToken" placeholder="Paste the token from your email" required>
+        </div>
+        <div class="form-group">
+          <label for="resetNewPassword">New Password</label>
+          <input type="password" id="resetNewPassword" placeholder="Create a strong password" required>
+        </div>
+        <div class="form-group">
+          <label for="resetConfirmPassword">Confirm New Password</label>
+          <input type="password" id="resetConfirmPassword" placeholder="Repeat your new password" required>
+        </div>
+        <button class="btn-primary" style="width:100%;" onclick="handleResetPassword()">Set New Password</button>
+        <p style="text-align:center;margin-top:12px;font-size:.82rem;">
+          <a href="#" onclick="showForgotStep1();return false;" style="color:var(--sky);text-decoration:none;">← Back to email step</a>
+        </p>
+      </div>
+
+      <div id="forgotMessage" style="display:none;margin-top:16px;"></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.admin-tabs{display:flex;gap:6px;margin-bottom:20px;background:var(--parchment);border-radius:var(--r-pill);padding:5px;width:fit-content;}
+.admin-tab{background:transparent;color:var(--bark);border-radius:var(--r-pill);padding:8px 18px;font-size:.8rem;font-weight:700;border:none;cursor:pointer;transition:all var(--ease);}
+.admin-tab.active{background:var(--white);color:var(--sky);box-shadow:var(--sh-xs);}
+.admin-tab-content{animation:rise .3s ease both;}
+.admin-grid-view{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+.admin-report-card{background:var(--white);border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--sand);box-shadow:var(--sh-xs);transition:all var(--ease);}
+.admin-report-card:hover{box-shadow:var(--sh-md);transform:translateY(-3px);}
+.admin-report-card-img{width:100%;height:160px;object-fit:cover;display:block;background:var(--parchment);}
+.admin-report-card-img-placeholder{width:100%;height:100px;display:flex;align-items:center;justify-content:center;background:var(--parchment);color:var(--stone);font-size:1.5rem;}
+.admin-report-card-body{padding:14px 16px;}
+.admin-report-card-body h4{font-family:var(--font-serif);font-size:.95rem;font-weight:600;color:var(--ink);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.photo-strip-item{flex-shrink:0;width:110px;height:80px;border-radius:var(--r-md);overflow:hidden;border:2px solid var(--sand);cursor:pointer;transition:all var(--ease);position:relative;}
+.photo-strip-item:hover{border-color:var(--sky);transform:scale(1.05);}
+.photo-strip-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-strip-item .strip-label{position:absolute;bottom:0;left:0;right:0;background:rgba(26,18,11,.6);color:#fff;font-size:.6rem;padding:3px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:768px){.admin-tabs{width:100%;overflow-x:auto;}.admin-tab{white-space:nowrap;}.admin-report-card-img{height:120px;}}
+@media(max-width:600px){#adminStatsBar{grid-template-columns:1fr 1fr!important;}}
+</style>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="script.js"></script>
+</body>
+</html>
