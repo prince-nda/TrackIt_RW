@@ -9,7 +9,7 @@ from flask_mail import Message
 from App.extensions import mail
 from datetime import datetime
 
-reports_bp = Blueprint('reports', _name_, url_prefix='/api/reports')
+reports_bp = Blueprint('reports', __name__, url_prefix='/api/reports')
 
 
 @reports_bp.route('', methods=['GET'])
