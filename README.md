@@ -264,3 +264,5 @@ Expected response:
 ---
 
 > Built for Kigali, Rwanda
+Team task sheet link:
+https://docs.google.com/spreadsheets/d/1PuEkhmLZsA3Gxyrd8xKchotdKUu8MHxG_W41nr_kgS0/edit?usp=sharing
