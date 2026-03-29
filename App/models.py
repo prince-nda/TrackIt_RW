@@ -11,6 +11,9 @@ class User(db.Model):
     is_verified = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    reset_token = db.Column(db.String(100), unique=True, nullable=True)
+    reset_token_expiry = db.Column(db.DateTime, nullable=True)
+    
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
@@ -20,7 +23,7 @@ class Location(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
-    address = db.Column(db.String(200), nullable=True)  # Fixed: String not string
+    address = db.Column(db.String(200), nullable=True) # Fixed: String not string
     district = db.Column(db.String(100), nullable=True)
     sector = db.Column(db.String(100), nullable=True)
     cell = db.Column(db.String(100), nullable=True)
@@ -39,7 +42,6 @@ class Report(db.Model):
     is_anonymous = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     resolved_at = db.Column(db.DateTime, nullable=True)
-
     user = db.relationship('User', foreign_keys=[user_id], backref=db.backref('reports', lazy=True))
     category = db.relationship('Category', backref=db.backref('reports', lazy=True))
     location = db.relationship('Location', backref=db.backref('reports', lazy=True))
@@ -61,7 +63,7 @@ class Notification(db.Model):
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     report_id = db.Column(db.Integer, db.ForeignKey('report.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Fixed: user-id → user_id
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # Fixed: user-id → user_id
     content = db.Column(db.Text, nullable=False)
     is_official = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

@@ -1,5 +1,5 @@
 from App import create_app
-from App.extensions import db
+from App.extensions import db, bcrypt, jwt, mail
 from App.models import User, Category, Location, Report, Notification, Comment, StatusHistory
 
 app = create_app()
