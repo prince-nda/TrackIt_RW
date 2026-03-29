@@ -1,7 +1,51 @@
+import secrets
+from datetime import datetime, timedelta
+from flask_mail import Message
+from App.extensions import mail
 from flask import Blueprint, request, jsonify, current_app
 from App.extensions import db, bcrypt 
 from App.models import User
 from App.utils.decorators import role_required
+
+def send_reset_email(email, token):
+    """Send password reset email"""
+    reset_link = f"http://localhost:3000/reset-password?token={token}"
+    
+    msg = Message(
+        subject="Reset Your Password - TrackIt RW",
+        recipients=[email],
+        html=f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Password Reset</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #f4f4f4; padding: 20px; border-radius: 10px;">
+                <h1 style="color: #333;">Reset Your Password</h1>
+                <p>You requested to reset your password for your TrackIt RW account.</p>
+                <p>Click the button below to reset your password:</p>
+                <a href="{reset_link}" 
+                   style="display: inline-block; background-color: #4CAF50; color: white; 
+                          padding: 12px 24px; text-decoration: none; border-radius: 5px; 
+                          margin: 20px 0;">
+                    Reset Password
+                </a>
+                <p>Or copy this link to your browser:</p>
+                <p><a href="{reset_link}">{reset_link}</a></p>
+                <p>This link expires in <strong>1 hour</strong>.</p>
+                <hr>
+                <p style="color: #666; font-size: 12px;">
+                    If you didn't request this, please ignore this email.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+    )
+    
+    mail.send(msg)
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -84,20 +128,20 @@ def admin_check():
 # @jwt_required()
 # @role_required("Admin")
 # def promote_user():
-#     data = request.get_json() or {}
-#     email = data.get("email")
+# data = request.get_json() or {}
+# email = data.get("email")
 
-#     if not email:
-#         return jsonify({"message": "Email is required"}), 400
+# if not email:
+# return jsonify({"message": "Email is required"}), 400
 
-#     user = User.query.filter_by(email=email).first()
-#     if not user:
-#         return jsonify({"message": "User not found"}), 404
+# user = User.query.filter_by(email=email).first()
+# if not user:
+# return jsonify({"message": "User not found"}), 404
 
-#     user.role = "Admin"
-#     db.session.commit()
+# user.role = "Admin"
+# db.session.commit()
 
-#     return jsonify({"message": f"{user.email} promoted to Admin"}), 200
+# return jsonify({"message": f"{user.email} promoted to Admin"}), 200
 
 # user profile
 @auth_bp.route("/profile", methods=["GET"])
@@ -155,6 +199,80 @@ def create_authority():
 # @auth_bp.route("/logout", methods=["DELETE"])
 # @jwt_required()
 # def logout():
-#     jti = get_jwt()["jti"]
-#     jwt_blocklist.add(jti)
-#     return jsonify({"message": "Successfully logged out"}), 200
+# jti = get_jwt()["jti"]
+# jwt_blocklist.add(jti)
+# return jsonify({"message": "Successfully logged out"}), 200
+
+@auth_bp.route('/forgot-password', methods=['POST', 'OPTIONS'])
+def forgot_password():
+    """Request password reset email"""
+    if request.method == 'OPTIONS':
+        response = jsonify({})
+        response.status_code = 200
+        return response
+    
+    data = request.get_json()
+    email = data.get('email')
+    
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+    
+    user = User.query.filter_by(email=email).first()
+    
+    # For security, always return success even if email doesn't exist
+    # This prevents email enumeration attacks
+    if not user:
+        return jsonify({'message': 'If that email exists, we\'ve sent a reset link'}), 200
+    
+    # Generate reset token
+    token = secrets.token_urlsafe(32)
+    user.reset_token = token
+    user.reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
+    
+    db.session.commit()
+    
+    # Send email
+    try:
+        send_reset_email(user.email, token)
+    except Exception as e:
+        print(f"Email error: {e}")
+        # Don't reveal email error to user
+    
+    return jsonify({'message': 'Reset link sent to your email'}), 200
+
+@auth_bp.route('/reset-password', methods=['POST', 'OPTIONS'])
+def reset_password():
+    """Reset password using token"""
+    if request.method == 'OPTIONS':
+        response = jsonify({})
+        response.status_code = 200
+        return response
+    
+    data = request.get_json()
+    token = data.get('token')
+    new_password = data.get('new_password')
+    
+    if not token or not new_password:
+        return jsonify({'error': 'Token and new password required'}), 400
+    
+    # Find user by token
+    user = User.query.filter_by(reset_token=token).first()
+    
+    if not user:
+        return jsonify({'error': 'Invalid or expired token'}), 400
+    
+    # Check if token expired
+    if user.reset_token_expiry < datetime.utcnow():
+        return jsonify({'error': 'Token has expired'}), 400
+    
+    # Hash new password
+    hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+    user.password = hashed_password
+    
+    # Clear reset token
+    user.reset_token = None
+    user.reset_token_expiry = None
+    
+    db.session.commit()
+    
+    return jsonify({'message': 'Password reset successful'}), 200
